@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Maze Runner Escape</title>
+<style>
+body { margin: 0; background: black; }
+canvas { display: block; margin: auto; background: #111; }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x: 50, y: 50, size: 20 };
+let griever = { x: 500, y: 500, size: 20, speed: 1.2 };
+let exit = { x: 550, y: 50, size: 25 };
+
+let keys = {};
+let puzzleSolved = false;
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function movePlayer() {
+    if(keys["ArrowUp"]) player.y -= 2;
+    if(keys["ArrowDown"]) player.y += 2;
+    if(keys["ArrowLeft"]) player.x -= 2;
+    if(keys["ArrowRight"]) player.x += 2;
+}
+
+function moveGriever() {
+    let dx = player.x - griever.x;
+    let dy = player.y - griever.y;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+
+    griever.x += (dx/dist) * griever.speed;
+    griever.y += (dy/dist) * griever.speed;
+}
+
+function checkCollision(a, b) {
+    return (
+        a.x < b.x + b.size &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.size > b.y
+    );
+}
+
+function drawMaze() {
+    ctx.fillStyle = "#333";
+    ctx.fillRect(200, 0, 20, 400);
+    ctx.fillRect(400, 200, 20, 400);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawMaze();
+
+    // Player
+    ctx.fillStyle = "#00ffcc";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+
+    // Griever
+    ctx.fillStyle = "red";
+    ctx.fillRect(griever.x, griever.y, griever.size, griever.size);
+
+    // Exit
+    ctx.fillStyle = puzzleSolved ? "lime" : "gray";
+    ctx.fillRect(exit.x, exit.y, exit.size, exit.size);
+}
+
+function gameLoop() {
+    movePlayer();
+    moveGriever();
+
+    // Puzzle trigger zone
+    if(player.x > 250 && player.x < 300 && player.y > 450 && player.y < 500 && !puzzleSolved) {
+        let answer = prompt(
+        "🔐 PUZZLE:\n\nA code reads: BQQMF\nEach letter shifted +1\n\nWhat is the real word?"
+        );
+
+        if(answer && answer.toLowerCase() === "apple") {
+            alert("Correct! Exit unlocked.");
+            puzzleSolved = true;
+        } else {
+            alert("Wrong! The Griever speeds up!");
+            griever.speed += 0.5;
+        }
+    }
+
+    // Lose condition
+    if(checkCollision(player, griever)) {
+        alert("💀 The Griever caught you!");
+        location.reload();
+    }
+
+    // Win condition
+    if(checkCollision(player, exit) && puzzleSolved) {
+        alert("🎉 You escaped the Maze!");
+        location.reload();
+    }
+
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
